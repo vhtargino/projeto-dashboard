@@ -1,0 +1,11 @@
+Função file_selector():
+Aqui está uma explicação passo a passo do que essa função faz:
+
+1.
+diretorio="C:\Planilhas": Esta função tem um argumento chamado diretorio, que é opcional e tem um valor padrão de "C:\Planilhas". Isso significa que se você não especificar um diretório ao chamar a função, o diretório padrão será usado.
+
+arquivos = os.listdir(diretorio): Aqui, a função os.listdir() é usada para listar todos os arquivos e diretórios dentro do diretório especificado. Isso significa que a variável arquivos conterá uma lista de nomes de arquivos e diretórios no diretório especificado.
+
+arquivo_selecionado = st.selectbox("Escolha um arquivo", arquivos): Esta linha de código usa a função st.selectbox() do Streamlit para criar uma caixa de seleção na interface do usuário, onde o usuário pode escolher um arquivo a partir da lista de arquivos obtida no passo anterior. O texto "Escolha um arquivo" é exibido como rótulo na caixa de seleção.
+
+return os.path.join(diretorio, arquivo_selecionado): Por fim, a função retorna o caminho completo para o arquivo selecionado. Isso é feito usando a função os.path.join(), que combina o caminho do diretório com o nome do arquivo selecionado, criando assim o caminho completo.
