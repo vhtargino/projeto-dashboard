@@ -83,11 +83,13 @@ try:
 
     sintomas = df['SINTOMAS']
     todos_sintomas = ';'.join(sintomas).split(';')
-    sintomas_unicos = sorted(set(todos_sintomas))
+    todos_sintomas_2 = ','.join(todos_sintomas).split(',')
+    sintomas_unicos = sorted(set(todos_sintomas_2))
 
     comorbidades = df['COMORBIDADES'].astype(str)
     todas_comorbidades = ';'.join(comorbidades).split(';')
-    comorbidades_unicas = sorted(set(todas_comorbidades))
+    todas_comorbidades_2 = ','.join(todas_comorbidades).split(',')
+    comorbidades_unicas = sorted(set(todas_comorbidades_2))
     
     vacinas = df['VACINA'].astype(str)
     numero_vacinas = sorted(set(vacinas))
@@ -97,6 +99,7 @@ try:
 
     hipotese_diagnostica = df['HIPOTESE DIAGNOSTICA'].astype(str)
     todas_hipoteses_diagnosticas = ';'.join(hipotese_diagnostica).split(';')
+    todas_hipoteses_diagnosticas = ','.join(hipotese_diagnostica).split(',')
     hipoteses_diagnosticas_unicas = sorted(set(todas_hipoteses_diagnosticas))
 
     finalizacoes_casos_limpos = []
@@ -138,14 +141,15 @@ try:
                 semana_epidemiologica_termino = st.number_input('Escolha o número da semana epidemiológica final',min_value=semana_epidemiologica_comeco, max_value=52, step=1)
                 filtro_semana_epidemiologica = (df['SEMANA Nº'] >= semana_epidemiologica_comeco) & (df['SEMANA Nº'] <= semana_epidemiologica_termino)
                 resultado_final = resultado_final[filtro_semana_epidemiologica]
-            #criterio 2 - paciente
+            #corrigir
             if criterio == 2:
                 st.subheader('Paciente\n')
-                nome_paciente = st.text_input('Filtrar por Nome do Paciente')
+                nome_paciente = st.selectbox('Filtrar por Nome do Paciente', pacientes_unicos)
                 if nome_paciente:
-                    resultado_final = resultado_final[resultado_final['Paciente'].str.contains(nome_paciente, case=False)]
+                    resultado_final = resultado_final[resultado_final['PACIENTE'].str.contains(nome_paciente, case=False)]
                 else:
                     resultado_final == resultado_final
+                    
             if criterio == 3:
                 st.subheader('Sexo\n')
                 genero_paciente = st.selectbox(
@@ -196,10 +200,12 @@ try:
                 if opcoes_comorbidades:
                     filtro_comorbidades = df['COMORBIDADES'].str.contains('|'.join(opcoes_comorbidades), case=False, na=False)
                     resultado_final = resultado_final[filtro_comorbidades]
+                    
             if criterio == 9:
                 st.subheader('Vacina\n')
                 quantidade_vacinas = st.selectbox('Qual a quantidade de vacinas?', numero_vacinas)
-                resultado_final= resultado_final[resultado_final['Vacina'] == quantidade_vacinas]
+                resultado_final= resultado_final[resultado_final['VACINA'] == quantidade_vacinas]
+                
             if criterio == 10:
                 st.subheader('Tipos de leitos\n')
                 opcao_tipo_leito = st.selectbox(
