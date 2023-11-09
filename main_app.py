@@ -19,29 +19,7 @@ with st.container():
 # Criação e organização do menu lateral
 with st.sidebar:
     st.header('Critérios a serem utilizados')
-
-    checkboxes = [
-        st.checkbox('Data de Internação'),
-        st.checkbox('Semana Epidemiológica'),
-        st.checkbox('Paciente'),
-        st.checkbox('Sexo'),
-        st.checkbox('Idade'),
-        st.checkbox('Município de residência'),
-        st.checkbox('Sintomas'),
-        st.checkbox('Data dos sintomas'),
-        st.checkbox('Comorbidades'),
-        st.checkbox('Vacina'),
-        st.checkbox('Tipo de leito'),
-        st.checkbox('Evolução do Paciente'),
-        st.checkbox('Exames'),
-        st.checkbox('Data do exame'), #pode ser mais de uma?
-        st.checkbox('Hipótese diagnóstica'),
-        st.checkbox('Notificação de Doença ou Agravo'),
-        st.checkbox('Data da notificação'),
-        st.checkbox('Finalização do caso'),
-        st.checkbox('Detalhe da finalização do caso'),
-        st.checkbox ('Data da finalização do caso')
-    ]
+    checkboxes = [st.checkbox(criterio) for criterio in ['Data de Internação', 'Semana Epidemiológica', 'Paciente', 'Sexo', 'Idade', 'Município de residência', 'Sintomas', 'Data dos sintomas', 'Comorbidades', 'Vacina', 'Tipo de leito', 'Evolução do Paciente', 'Exames', 'Data do exame', 'Hipótese diagnóstica', 'Notificação de Doença ou Agravo', 'Data da notificação', 'Finalização do caso', 'Detalhe da finalização do caso', 'Data da finalização do caso']]
 
 # Colunas para centralizar o widget de carregamento do arquivo
 col1, col2, col3 = st.columns(3)
@@ -69,43 +47,65 @@ else:
 
 # Implementação da pesquisa dentro de um try-except para tratamento de erro
 try: 
+    #criterio 0 - data
+    #criterio 1 - semana numero, tratado diretamento no criterio
+    #criterio 2
     todos_pacientes = df['PACIENTE']
     pacientes_unicos = sorted(set(todos_pacientes))
-    
+    #criterio 3
     todos_generos = df['SEXO']
     generos_unicos = sorted(set(todos_generos))
-
+    #criterio 4
     menor_idade = df['IDADE'].min()
     maior_idade = df['IDADE'].max()
-
+    #criterio 5
     todos_municipios_residencia = df['MUNICIPIO DE RESIDENCIA'].astype(str) #força a conversão de todos os valores para strings
     municipios_residencia_unicos = sorted(set(todos_municipios_residencia))
-
+    #criterio 6
     sintomas = df['SINTOMAS']
     todos_sintomas = ';'.join(sintomas).split(';')
     todos_sintomas_2 = ','.join(todos_sintomas).split(',')
     sintomas_unicos = sorted(set(todos_sintomas_2))
-
+    #criterio 7 - data
+    #criterio 8
     comorbidades = df['COMORBIDADES'].astype(str)
     todas_comorbidades = ';'.join(comorbidades).split(';')
     todas_comorbidades_2 = ','.join(todas_comorbidades).split(',')
     comorbidades_unicas = sorted(set(todas_comorbidades_2))
-    
+    #criterio 9
     vacinas = df['VACINA'].astype(str)
     numero_vacinas = sorted(set(vacinas))
-    
+    #criterio 10
     tipos_leitos = df['LEITO'].astype(str)
     tipos_leitos_unicos = sorted(set(tipos_leitos))
-
+    #criterio 11
+    tipos_evolucao = df['EVOLUCAO'].astype(str)
+    evolucao_unica = sorted(set(tipos_evolucao))
+    #criterio 12
+    tipos_exames = df['EXAMES'].astype(str)
+    tipos_exames_unicos = sorted(set(tipos_exames))
+    
+    #criterio 13 - data
+    #criterio 14
     hipotese_diagnostica = df['HIPOTESE DIAGNOSTICA'].astype(str)
     todas_hipoteses_diagnosticas = ';'.join(hipotese_diagnostica).split(';')
-    todas_hipoteses_diagnosticas = ','.join(hipotese_diagnostica).split(',')
-    hipoteses_diagnosticas_unicas = sorted(set(todas_hipoteses_diagnosticas))
-
+    todas_hipoteses_diagnosticas_2 = ','.join(todas_hipoteses_diagnosticas).split(',')
+    hipoteses_diagnosticas_unicas = sorted(set(todas_hipoteses_diagnosticas_2))
+    #criterio 15
+    tipos_notificacao = df['NOTIFICACAO DE DOENCA OU AGRAVO'].astype(str)
+    notificacao_unica = sorted(set(tipos_notificacao))
+    #criterio 16 - data
+    #criterio 17
     finalizacoes_casos_limpos = []
     finalizacoes_casos = df['FINALIZACAO DO CASO']
+    #criterio 18
+    detalhe_finalizacao = df['DETALHE DA FINALIZAÇÃO'].astype(str)
+    todos_detalhes = ';'.join(detalhe_finalizacao).split(';')
+    detalhe_finalizacao_2 = ','.join(detalhe_finalizacao).split(',')
+    detalhe_finalizacao_unico = sorted(set(detalhe_finalizacao_2))
+    #crtiterio 19 - data
 
-    for item in finalizacoes_casos:
+    for item in finalizacoes_casos: #logica para add a lista itens novos, fazer funcao em biblioteca e chamar aqui
         if isinstance(item, str):
             finalizacoes_casos_limpos.append(item)
 
@@ -214,8 +214,33 @@ try:
                 )
                 resultado_final = resultado_final[resultado_final['LEITO'] == opcao_tipo_leito]
             #criterio 11 - evolucao do paciente
+            if criterio == 11:
+                st.subheader('Tipos de evolução\n')
+                opcao_tipo_evolucao = st.selectbox(
+                    'Qual o tipo de evolução',
+                    evolucao_unica
+                )
+                resultado_final = resultado_final[resultado_final['EVOLUCAO'] == opcao_tipo_evolucao]
             #criterio 12 - exames
+            if criterio == 12:
+                st.subheader('Tipos de exames\n')
+                opcao_tipo_exame = st.selectbox(
+                    'Qual o tipo de exame',
+                    tipos_exames_unicos
+                )
+                resultado_final = resultado_final[resultado_final['EXAMES'] == opcao_tipo_exame]
             # criterio 13 - data dos exames
+            if criterio == 13:
+                st.subheader('Data dos exames\n')
+                data_exames = bib.input_periodo()
+
+                data_inicio_exames = datetime.datetime(data_exames[0].year, data_exames[0].month, data_exames[0].day)
+                data_fim_exames = datetime.datetime(data_exames[1].year, data_exames[1].month, data_exames[1].day)
+
+                df['DATA DO EXAME'] = pd.to_datetime(df['DATA DO EXAME'], format="%d.%m.%Y")
+
+                filtro_data_exames = (df['DATA DO EXAME'] >= data_inicio_exames) & (df['DATA DO EXAME'] <= data_fim_exames)
+                resultado_final = resultado_final[filtro_data_exames]
             if criterio == 14:
                 st.subheader('Hipótese diagnóstica\n')
                 opcao_hipotese_diagnostica = st.multiselect(
@@ -225,7 +250,25 @@ try:
                 filtro_hipotese_diagnostica = df['HIPOTESE DIAGNOSTICA'].str.contains('|'.join(opcao_hipotese_diagnostica), case=False, na=False)
                 resultado_final = resultado_final[filtro_hipotese_diagnostica]
             #criterio 15 - notificacao de doenca ou agravo
+            if criterio == 15:
+                st.subheader('Notificação de doença ou agravo\n')
+                opcao_tipo_notificacao = st.selectbox(
+                    'Qual o tipo de notificação: ',
+                    notificacao_unica
+                )
+                resultado_final = resultado_final[resultado_final['NOTIFICACAO DE DOENCA OU AGRAVO'] == opcao_tipo_notificacao] 
             #criterio 16 - data da notificacao do caso
+            if criterio == 16:
+                st.subheader('Data da notificação\n')
+                data_notificacao = bib.input_periodo()
+
+                data_inicio_notificacao = datetime.datetime(data_notificacao[0].year, data_notificacao[0].month, data_notificacao[0].day)
+                data_fim_notificacao = datetime.datetime(data_notificacao[1].year, data_notificacao[1].month, data_notificacao[1].day)
+
+                df['DATA DA NOTIFICAÇÃO'] = pd.to_datetime(df['DATA DA NOTIFICAÇÃO'], format="%d.%m.%Y")
+
+                filtro_data_notificacao = (df['DATA DA NOTIFICAÇÃO'] >= data_inicio_notificacao) & (df['DATA DA NOTIFICAÇÃO'] <= data_fim_notificacao)
+                resultado_final = resultado_final[filtro_data_notificacao]
             if criterio == 17:
                 st.subheader('Finalização do caso\n')
                 opcao_finalizacao_caso = st.selectbox(
@@ -234,14 +277,34 @@ try:
                 )
                 resultado_final = resultado_final[resultado_final['FINALIZACAO DO CASO'] == opcao_finalizacao_caso]
             #criterio 18 - detalhe da finalizacao(string)
+            if criterio == 18:
+                st.subheader('Detalhe da finalização do caso\n')
+                opcao_detalhe = st.multiselect(
+                    'Selecione o detalhe',
+                    detalhe_finalizacao_unico
+                )
+                if opcao_detalhe:
+                    filtro_detalhe = df['DETALHE DA FINALIZAÇÃO'].str.contains('|'.join(opcao_detalhe), case=False, na=False)
+                    resultado_final = resultado_final[filtro_detalhe]
             #criterio 19 - data da finalizacao do caso
+            if criterio == 19:
+                st.subheader('Data da finalizacao do caso\n')
+                data_finalizacao = bib.input_periodo()
+
+                data_inicio_finalizacao = datetime.datetime(data_finalizacao[0].year, data_finalizacao[0].month, data_finalizacao[0].day)
+                data_fim_finalizacao = datetime.datetime(data_finalizacao[1].year, data_finalizacao[1].month, data_finalizacao[1].day)
+
+                df['DATA DA FINALIZACAO DO CASO'] = pd.to_datetime(df['DATA DA FINALIZACAO DO CASO'], format="%d.%m.%Y")
+
+                filtro_data_finalizacao = (df['DATA DA FINALIZACAO DO CASO'] >= data_inicio_finalizacao) & (df['DATA DA FINALIZACAO DO CASO'] <= data_fim_finalizacao)
+                resultado_final = resultado_final[filtro_data_finalizacao]
+                
         st.divider()
         st.write("\nResultados da pesquisa:")
         st.write(resultado_final)
 except:
     st.write('')
-   
-
+    
 # GRÁFICOS COMEÇA AQUI
 st.divider()
 st.header('Gráficos: ', divider='red')
@@ -338,3 +401,4 @@ if st.sidebar.button("Gerar Gráfico"):
 
 # Salvar o gráfico localmente
 #fig.savefig("meu_grafico.png")
+    
