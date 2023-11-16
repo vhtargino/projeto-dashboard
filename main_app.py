@@ -19,7 +19,12 @@ with st.container():
 # Criação e organização do menu lateral
 with st.sidebar:
     st.header('Critérios a serem utilizados')
-    checkboxes = [st.checkbox(criterio) for criterio in ['Data de Internação', 'Semana Epidemiológica', 'Paciente', 'Sexo', 'Idade', 'Município de residência', 'Sintomas', 'Data dos sintomas', 'Comorbidades', 'Vacina', 'Tipo de leito', 'Evolução do Paciente', 'Exames', 'Data do exame', 'Hipótese diagnóstica', 'Notificação de Doença ou Agravo', 'Data da notificação', 'Finalização do caso', 'Detalhe da finalização do caso', 'Data da finalização do caso']]
+    checkboxes = [st.checkbox(criterio) for criterio in ['Data de Internação', 'Semana Epidemiológica', 
+                    'Paciente', 'Sexo', 'Idade','Município de residência', 'Sintomas', 
+                    'Data dos sintomas', 'Comorbidades', 'Vacina', 'Tipo de leito', 
+                    'Evolução do Paciente', 'Exames', 'Data do exame', 'Hipótese diagnóstica', 
+                    'Notificação de Doença ou Agravo', 'Data da notificação', 'Finalização do caso', 
+                    'Detalhe da finalização do caso', 'Data da finalização do caso']]
 
 # Colunas para centralizar o widget de carregamento do arquivo
 col1, col2, col3 = st.columns(3)
@@ -36,6 +41,13 @@ with col2:
 
 with col3:
     st.write('')
+    
+# Crie uma variável DataFrame vazia
+df = pd.DataFrame()
+
+# Pre-defina os códigos
+graficos_predefinidos = ['', '', '']
+
 
 # Condicional para notificar o usuário que nenhum arquivo foi adicionado
 # Caso o arquivo seja adicionado, cria a variável df
@@ -44,12 +56,28 @@ if planilha_excel is None:
     st.write('')
 else:
     df = pd.read_excel(planilha_excel)
-
+    
 # Implementação da pesquisa dentro de um try-except para tratamento de erro
 try: 
+    # Lista de colunas com data
+    #colunas_com_data = ["INTERNAÇÃO", "DATA DOS SINTOMAS", 
+                        #"DATA DO EXAME","DATA DA NOTIFICAÇÃO",
+                       # "DATA DA FINALIZACAO DO CASO"]
+
+    # Formatação de colunas com data
+    #for coluna in colunas_com_data:
+        #bib.format_date(df, coluna)
+        # Formatação de colunas com data
+    #df = bib.formatar_colunas_com_data(df, colunas_com_data)
+
     #criterio 0 - data
     #criterio 1 - semana numero, tratado diretamento no criterio
     #criterio 2
+    # Loop para tratar erro com colunas ao carregar a pagina
+    #for coluna in df.columns:
+        #todos_valores = df[coluna] if coluna in df.columns else []
+        #valores_unicos = sorted(set(todos_valores))
+
     todos_pacientes = df['PACIENTE']
     pacientes_unicos = sorted(set(todos_pacientes))
     #criterio 3
@@ -98,18 +126,17 @@ try:
     #criterio 17
     finalizacoes_casos_limpos = []
     finalizacoes_casos = df['FINALIZACAO DO CASO']
+    for item in finalizacoes_casos: #logica para add a lista itens novos, fazer funcao em biblioteca e chamar aqui
+        if isinstance(item, str):
+            finalizacoes_casos_limpos.append(item)
+
+    finalizacoes_casos_limpos_unicos = sorted(set(finalizacoes_casos_limpos))
     #criterio 18
     detalhe_finalizacao = df['DETALHE DA FINALIZAÇÃO'].astype(str)
     todos_detalhes = ';'.join(detalhe_finalizacao).split(';')
     detalhe_finalizacao_2 = ','.join(detalhe_finalizacao).split(',')
     detalhe_finalizacao_unico = sorted(set(detalhe_finalizacao_2))
     #crtiterio 19 - data
-
-    for item in finalizacoes_casos: #logica para add a lista itens novos, fazer funcao em biblioteca e chamar aqui
-        if isinstance(item, str):
-            finalizacoes_casos_limpos.append(item)
-
-    finalizacoes_casos_limpos_unicos = sorted(set(finalizacoes_casos_limpos))
 
     criterios_selecionados = []
 
@@ -119,11 +146,12 @@ try:
 
     if len(criterios_selecionados) == 0:
         st.warning('Informe pelo menos um critério de busca', icon="⚠️")
+        resultado_final = pd.DataFrame() # Define como DataFrame vazio
 
     if len(criterios_selecionados) > 0:
         st.header('Critérios escolhidos\n')
         st.divider()
-
+        
         resultado_final = df.copy()
 
         for criterio in criterios_selecionados:
@@ -148,7 +176,7 @@ try:
                 if nome_paciente:
                     resultado_final = resultado_final[resultado_final['PACIENTE'].str.contains(nome_paciente, case=False)]
                 else:
-                    resultado_final == resultado_final
+                    resultado_final = resultado_final
                     
             if criterio == 3:
                 st.subheader('Sexo\n')
@@ -302,16 +330,63 @@ try:
         st.divider()
         st.write("\nResultados da pesquisa:")
         st.write(resultado_final)
-except:
-    st.write('')
-    
-# GRÁFICOS COMEÇA AQUI
-st.divider()
-st.header('Gráficos: ', divider='red')
-st.write('')
-st.write('')
+        
+except Exception as e:
+    st.write(f'Erro: {str(e)}')
+    resultado_final = pd.DataFrame() # Define como DataFrame vazio em caso de erro
+ 
+# Gráficos
+# Se o DataFrame resultado_final não estiver vazio, continue com os gráficos
+if not resultado_final.empty:
+#Quantidade de óbitos em um período
+    df_obitos = resultado_final[resultado_final['FINALIZACAO DO CASO'] == 'ÓBITO']
 
-# Lista de tipos de gráficos Plotly
+
+    fig_obitos = px.histogram(df_obitos, x='DATA DA FINALIZACAO DO CASO', title='Quantidade de Óbitos',
+                            labels={'DATA DA FINALIZACAO DO CASO': 'Data da Finalização do Caso', 'count': 'Quantidade'},
+                            color_discrete_sequence=['red'])
+
+    # exibe o gráfico de óbitos
+    st.plotly_chart(fig_obitos)
+
+    # quantidade de altas em período
+    df_altas = resultado_final[resultado_final['FINALIZACAO DO CASO'] == 'ALTA']
+
+    fig_altas = px.histogram(df_altas, x='DATA DA FINALIZACAO DO CASO', title='Quantidade de Altas',
+                            labels={'DATA DA FINALIZACAO DO CASO': 'Data da Finalização do Caso', 'count': 'Quantidade'},
+                            color_discrete_sequence=['green'])
+
+    # Exibe o gráfico de altas
+    st.plotly_chart(fig_altas)
+
+    # quantidade de internacoes em periodo
+    fig_internacoes = px.histogram(resultado_final, x='INTERNAÇÃO', title='Quantidade de Internações',
+                                    labels={'INTERNAÇÃO': 'Data de Internação', 'count': 'Quantidade'},
+                                    color_discrete_sequence=['blue'])
+
+    # Exibe o gráfico de internacoes
+    st.plotly_chart(fig_internacoes)
+
+    # gráfico de óbitos com notificação
+    #df_obitos_notificados = df_obitos[df_obitos['NOTIFICACAO DE DOENCA OU AGRAVO'] == 'Sim']
+    df_obitos_notificados = df_obitos[df_obitos['NOTIFICACAO DE DOENCA OU AGRAVO'].isin(opcao_tipo_notificacao)]
+
+    # Agrupar por data da finalização do caso e contar o número de óbitos
+    df_obitos_notificados_agrupado = df_obitos_notificados.groupby('DATA DA FINALIZACAO DO CASO').size().reset_index(name='Quantidade')
+
+    # Configurar o gráfico com Matplotlib
+    plt.figure(figsize=(10, 6))
+    plt.bar(df_obitos_notificados_agrupado['DATA DA FINALIZACAO DO CASO'], df_obitos_notificados_agrupado['Quantidade'], color='purple')
+    plt.title('Quantidade de Óbitos Notificados')
+    plt.xlabel('Data da Finalização do Caso')
+    plt.ylabel('Quantidade')
+    plt.xticks(rotation=45, ha='right')
+    plt.tight_layout()
+
+    # Exibir o gráfico
+    st.pyplot(plt)
+
+#Lista de tipos de gráficos Plotly
 available_charts =[
     "Gráfico de Barras",
     "Gráfico de Linha",
@@ -331,60 +406,25 @@ available_charts =[
 #ordena a lista de tipos de gráficos
 available_charts = sorted(available_charts, key=lambda x: unidecode(x))
 
-
 # Sidebar para seleção de tipo de gráfico e colunas de dados
 st.sidebar.subheader('Configuração de Gráfico')
 chart_type = st.sidebar.selectbox("Selecione o tipo de gráfico:", available_charts)
-
-# Verifica se a seleção de colunas é relevante para o tipo de gráfico selecionado
+selected_columns = st.sidebar.multiselect("Selecione as colunas de dados:", df.columns)
+#condicoes para cada tipo de grafico
 if chart_type in ["Gráfico de Barras", "Gráfico de Linha", "Gráfico de Dispersão", "Gráfico de Área"]:
-    selected_columns = st.sidebar.multiselect("Selecione as colunas de dados:", resultado_final.columns)
+    selected_columns = st.sidebar.multiselect("Selecione as colunas de dados:", resultado_final.columns, key="chave_unica_multiselect")
 # Verifica se a seleção de colunas é relevante para o tipo de gráfico de pizza
 elif chart_type == "Gráfico de Pizza":
-    selected_columns = [st.sidebar.multiselect("Selecione a coluna para rótulos:", resultado_final.columns)]
+    selected_columns = [st.sidebar.selectbox("Selecione a coluna para rótulos:", resultado_final.columns)]
     if not selected_columns:
         st.sidebar.error("Selecione pelo menos uma coluna para rótulos.")
     elif len(selected_columns) == 1:
         st.sidebar.warning("Selecione uma segunda coluna para valores.")
     else:
         selected_columns.append(st.sidebar.selectbox("Selecione a coluna para valores:", resultado_final.columns))
-    
 # Outros tipos de gráficos não precisam de colunas selecionadas
 else:
     selected_columns = []
-
-# Função para criar o gráfico selecionado, recebendo parametros como o df, 
-# tipo de grafico escolhido e colunas selecionadas da tabela já tratadas e filtradas
-def create_chart(df, chart_type, selected_columns):
-    try:
-        if chart_type == "Gráfico de Barras":
-            return px.bar(df, x=selected_columns[0], y=selected_columns[1], title="Gráfico de Barras")
-        elif chart_type == "Gráfico de Linha":
-            return px.line(df, x=selected_columns[0], y=selected_columns[1], title="Gráfico de Linha")
-        elif chart_type == "Gráfico de Pizza":
-            return px.pie(df, names=selected_columns[0], title="Gráfico de Pizza")
-        elif chart_type == "Gráfico de Dispersão":
-            return px.scatter(df, x=selected_columns[0], y=selected_columns[1], title="Gráfico de Dispersão")
-        elif chart_type == "Gráfico de Radar":
-            return px.line_polar(df, r=selected_columns[0], theta=selected_columns[1], title="Gráfico de Radar")
-        elif chart_type == "Gráfico de Caixas":
-            return px.box(df, x=selected_columns[0], y=selected_columns[1], title="Gráfico de Caixas")
-        elif chart_type == "Gráfico de Histograma":
-            return px.histogram(df, x=selected_columns[0], title="Gráfico de Histograma")
-        elif chart_type == "Gráfico de Área":
-            return px.area(df, x=selected_columns[0], y=selected_columns[1], title="Gráfico de Área")
-        elif chart_type == "Gráfico de Mapa de Calor":
-            return px.density_heatmap(df, x=selected_columns[0], y=selected_columns[1], title="Gráfico de Mapa de Calor")
-        elif chart_type == "Gráfico de Violino":
-            return px.violin(df, x=selected_columns[0], y=selected_columns[1], title="Gráfico de Violino")
-        elif chart_type == "Gráfico de Rosca":
-            return px.pie(df, names=selected_columns[0], hole=0.3, title="Gráfico de Rosca")
-        elif chart_type == "Gráfico de Área Empilhada":
-            return px.area(df, x=selected_columns[0], y=selected_columns[1], title="Gráfico de Área Empilhada", facet_col=selected_columns[2])
-        elif chart_type == "Gráfico de Gráfico Polar":
-            return px.line_polar(df, r=selected_columns[0], theta=selected_columns[1], title="Gráfico Polar")
-    except ValueError as e:
-        st.error(f"Erro ao criar o gráfico: {e}")
     
 # Botão para gerar o gráfico
 if st.sidebar.button("Gerar Gráfico"):
@@ -395,10 +435,8 @@ if st.sidebar.button("Gerar Gráfico"):
     else:
         st.title("Gráfico Gerado: ")
         st.write(f"Visualizando os dados selecionados em um {chart_type}")
-        chart = create_chart(resultado_final, chart_type, selected_columns)
+        chart = bib.create_chart(resultado_final, chart_type)
         if chart is not None:
             st.plotly_chart(chart)
-
-# Salvar o gráfico localmente
-#fig.savefig("meu_grafico.png")
-    
+            
+            
