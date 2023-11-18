@@ -7,6 +7,15 @@ from streamlit_gsheets import GSheetsConnection
 st.set_page_config(page_title='Dashboard Prontovida',
                    layout='wide')
 
+def trocar_por_ponto_virgula(lista):
+    for i in range(len(lista)):
+        if ', ' in lista[i]:
+            lista[i] = lista[i].replace(', ', ';').strip()
+        if ',' in lista[i]:
+            lista[i] = lista[i].replace(',', ';').strip()
+    return lista
+
+
 # Título principal
 with st.container():
     st.title('Dashboard Prontovida')
@@ -30,11 +39,12 @@ with st.sidebar:
         st.checkbox('Finalização do caso'),
     ]
 
+# Limpeza do cache, conexão com o Google Sheets e criação da planilha
 st.cache_data.clear()
 conn = st.connection("gsheets", type=GSheetsConnection)
-
 df = conn.read(worksheet="Página1", usecols=[i for i in range(0, 20)])
 
+# Definição dos filtros de pesquisa
 todos_generos = df['SEXO'].astype(str)
 generos_unicos = sorted(set(todos_generos))
 
@@ -44,18 +54,24 @@ maior_idade = int(df['IDADE'].max())
 todos_municipios_residencia = df['MUNICIPIO DE RESIDENCIA'].astype(str)
 municipios_residencia_unicos = sorted(set(todos_municipios_residencia))
 
+# Leitura dos sintomas e separação de elementos. O prenchimento é multivalorado e deve ser separado
 sintomas = df['SINTOMAS'].astype(str)
+sintomas = trocar_por_ponto_virgula(sintomas)
 todos_sintomas = ';'.join(sintomas).split(';')
 sintomas_unicos = sorted(set(todos_sintomas))
 
+# Leitura e separação das comorbidades. Preenchimento multivalorado e deve ser separado
 comorbidades = df['COMORBIDADES'].astype(str)
+comorbidades = trocar_por_ponto_virgula(comorbidades)
 todas_comorbidades = ';'.join(comorbidades).split(';')
 comorbidades_unicas = sorted(set(todas_comorbidades))
 
 tipos_leitos = df['LEITO'].astype(str)
 tipos_leitos_unicos = sorted(set(tipos_leitos))
 
+# Leitura e separação da hipótese diagnóstica. Preenchimento multivalorado e deve ser separado
 hipotese_diagnostica = df['HIPOTESE DIAGNOSTICA'].astype(str)
+hipotese_diagnostica = trocar_por_ponto_virgula(hipotese_diagnostica)
 todas_hipoteses_diagnosticas = ';'.join(hipotese_diagnostica).split(';')
 hipoteses_diagnosticas_unicas = sorted(set(todas_hipoteses_diagnosticas))
 
@@ -74,15 +90,11 @@ for i in range(len(checkboxes)):
     if checkboxes[i]:
         criterios_selecionados.append(i)
 
-# if len(criterios_selecionados) == 0:
-#     st.warning('Informe pelo menos um critério de busca', icon="⚠️")
+# Criação de abas para exibição da planilha e dos gráficos
+aba1, aba2 = st.tabs(["Pesquisa", "Gráficos"])
 
-try:
-    if len(criterios_selecionados) >= 0:
-        # if len(criterios_selecionados) > 0:
-        #     st.header('Critérios escolhidos\n')
-        #     st.divider()
-
+with aba1:
+    try:
         resultado_final = df.copy()
 
         for criterio in criterios_selecionados:
@@ -199,5 +211,8 @@ try:
             st.write("\nResultados da pesquisa:")
 
         st.write(resultado_final)
-except:
-    st.write('Erro ao ler a tabela')
+    except:
+        st.write('Erro ao ler a tabela')
+
+with aba2:
+    st.write("Aba para exibição de gráficos utilizando os critérios de pesquisa selecionados")
