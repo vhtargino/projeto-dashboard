@@ -214,12 +214,23 @@ with aba1:
 
         st.write(resultado_final)
     except:
-        st.write('Erro ao ler a tabela')
+        st.subheader('Erro ao ler a tabela')
 
 with aba2:
-    # col1, col2 = st.columns(2)
+    col1, col2 = st.columns(2)
+    col3, col4 = st.columns(2)
 
     try:
+        # Contagem de casos
+        total_casos = resultado_final['PACIENTE'].astype(str)
+        total_casos_numero = sorted(set(total_casos))
+
+        if len(criterios_selecionados) == 0:
+            col1.subheader('Total de casos: ' + str(len(total_casos_numero)))
+        elif len(criterios_selecionados) > 0:
+            col1.subheader('Total de casos dentro do filtro selecionado: ' + str(len(total_casos_numero)))
+
+        # Criação de gráfico de barras com altas, óbitos e transferências
         total_alta = len(resultado_final[resultado_final['FINALIZACAO DO CASO'] == 'ALTA'])
         total_obito = len(resultado_final[resultado_final['FINALIZACAO DO CASO'] == 'ÓBITO'])
         total_transferencia = len(resultado_final[resultado_final['FINALIZACAO DO CASO'] == 'TRANSFERENCIA'])
@@ -227,15 +238,21 @@ with aba2:
         finalizacao_totais = pd.DataFrame({'Finalização do caso': ['ALTA', 'ÓBITO', 'TRANSFERÊNCIA'],
                                 'Total': [total_alta, total_obito, total_transferencia]})
 
-        fig = px.bar(finalizacao_totais, x='Finalização do caso', y='Total', title='Altas, óbitos e transferências', labels={'count': 'Total'})
-        fig.update_layout(yaxis_range=[0, max(total_alta, total_obito, total_transferencia) + 10])
-        fig.update_layout(hoverlabel=dict(font_size=16))
+        fig1 = px.bar(finalizacao_totais, x='Finalização do caso', y='Total', title='Altas, óbitos e transferências', labels={'count': 'Total'})
+        fig1.update_layout(yaxis_range=[0, max(total_alta, total_obito, total_transferencia) + 10], hoverlabel=dict(font_size=18))
 
-        total_casos = resultado_final['PACIENTE'].astype(str)
-        total_casos_numero = sorted(set(total_casos))
+        col3.plotly_chart(fig1)
+        
+        # Criação de gráfico de pizza com sexo
+        total_mulheres = len(resultado_final[resultado_final['SEXO'] == 'FEMININO'])
+        total_homens = len(resultado_final[resultado_final['SEXO'] == 'MASCULINO'])
 
-        st.subheader('Total de casos dentro do período selecionado: ' + str(len(total_casos_numero)))
+        sexo_totais = pd.DataFrame({'Sexo': ['FEMININO', 'MASCULINO'],
+                                        'Total': [total_mulheres, total_homens]})
 
-        st.write(fig)
+        fig2 = px.pie(sexo_totais, names='Sexo', values='Total')
+        fig2.update_layout(hoverlabel=dict(font_size=18))
+
+        col4.plotly_chart(fig2)
     except:
-        st.write('')
+        st.subheader('Erro ao criar gráfico')
