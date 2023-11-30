@@ -5,7 +5,7 @@ from streamlit_gsheets import GSheetsConnection
 import plotly.express as px
 
 # Configuração da página
-st.set_page_config(page_title='Dashboard Prontovida',
+st.set_page_config(page_title='Dashboard Hospital Municipal Prontovida',
                    layout='wide')
 
 def trocar_por_ponto_virgula(lista):
@@ -16,11 +16,15 @@ def trocar_por_ponto_virgula(lista):
             lista[i] = lista[i].replace(',', ';').strip()
     return lista
 
+# user-select-none svg-container
 
 # Título principal
 with st.container():
-    st.title('Dashboard Prontovida')
-    st.divider()
+    col_a, col_b = st.columns(2)
+
+    col_a.image('prontovida_logo_copia.png', use_column_width='auto')
+    col_b.image('prefeitura_logo.png', use_column_width='auto')
+    # st.divider()
 
 # Criação e organização do menu lateral
 with st.sidebar:
@@ -207,10 +211,60 @@ for criterio in criterios_selecionados:
 # Criação de abas para exibição da planilha e dos gráficos
 aba1, aba2 = st.tabs(["Planilha", "Gráficos"])
 
+# Filtragem de dados para gráficos e estatísticas
+# Contagem de casos
+total_casos = resultado_final['PACIENTE'].astype(str)
+total_casos_numero = sorted(set(total_casos))
+
+# Semana com mais pacientes
+lista_coluna_semanas = resultado_final['SEMANA Nº'].astype(str).tolist()
+contagem = {}
+
+for i in lista_coluna_semanas:
+    if i in contagem:
+        contagem[i] += 1
+    else:
+        contagem[i] = 1
+
+semana_mais_frequente = max(contagem, key=contagem.get)
+pacientes_semana_mais_frequente = contagem[semana_mais_frequente]
+
+# Contagem de sexo
+total_mulheres = len(resultado_final[resultado_final['SEXO'] == 'FEMININO'])
+total_homens = len(resultado_final[resultado_final['SEXO'] == 'MASCULINO'])
+
+# Contagem leito
+total_enf_clinica = len(resultado_final[resultado_final['LEITO'] == 'ENF CLINICA'])
+total_enf_onco = len(resultado_final[resultado_final['LEITO'] == 'ENF ONCO'])
+total_uti_geral = len(resultado_final[resultado_final['LEITO'] == 'UTI GERAL'])
+total_uti_cardio = len(resultado_final[resultado_final['LEITO'] == 'UTI CARDIO'])
+
+# Contagem de finalizações dos casos
+total_alta = len(resultado_final[resultado_final['FINALIZACAO DO CASO'] == 'ALTA'])
+total_obito = len(resultado_final[resultado_final['FINALIZACAO DO CASO'] == 'ÓBITO'])
+total_transferencia = len(resultado_final[resultado_final['FINALIZACAO DO CASO'] == 'TRANSFERENCIA'])
+
 with aba1:
+    col1, col2 = st.columns(2)
+
     try:
+        # Display de dados na tela
+        col1.subheader("Dados:")
+        col1.markdown(f'''**Total de casos dentro do filtro selecionado:** {str(len(total_casos_numero))}  
+                      **Semana com maior número de pacientes:** Semana nº {semana_mais_frequente}  
+                      **Total de pacientes na semana nº {semana_mais_frequente}:** {pacientes_semana_mais_frequente}  
+                      **Total de pacientes do sexo feminino:** {total_mulheres}  
+                      **Total de pacientes do sexo masculino:** {total_homens}  
+                      **Total de leitos Enfermaria Clínica:** {total_enf_clinica}  
+                      **Total de leitos Enfermaria Onco:** {total_enf_onco}  
+                      **Total de leitos UTI Geral:** {total_uti_geral}  
+                      **Total de leitos UTI Cardio:** {total_uti_cardio}''')
+
+        st.divider()
+
+        # Display da planilha
         if len(criterios_selecionados) > 0:
-            st.write("\nResultados da pesquisa:")
+            st.write('Resultados da pesquisa:')
 
         st.write(resultado_final)
     except:
@@ -221,20 +275,25 @@ with aba2:
     col3, col4 = st.columns(2)
 
     try:
-        # Contagem de casos
-        total_casos = resultado_final['PACIENTE'].astype(str)
-        total_casos_numero = sorted(set(total_casos))
+        # Display de dados na tela
+        col1.subheader("Dados:")
 
-        if len(criterios_selecionados) == 0:
-            col1.subheader('Total de casos: ' + str(len(total_casos_numero)))
-        elif len(criterios_selecionados) > 0:
-            col1.subheader('Total de casos dentro do filtro selecionado: ' + str(len(total_casos_numero)))
-
+        # if len(criterios_selecionados) == 0:
+        #     col1.write('**Total de casos:** ' + str(len(total_casos_numero)))
+        # elif len(criterios_selecionados) > 0:
+        #     col1.write('**Total de casos dentro do filtro selecionado:** ' + str(len(total_casos_numero)))
+        
+        col1.markdown(f'''**Total de casos dentro do filtro selecionado:** {str(len(total_casos_numero))}  
+                      **Semana com maior número de pacientes:** Semana nº {semana_mais_frequente}  
+                      **Total de pacientes na semana nº {semana_mais_frequente}:** {pacientes_semana_mais_frequente}  
+                      **Total de pacientes do sexo feminino:** {total_mulheres}  
+                      **Total de pacientes do sexo masculino:** {total_homens}  
+                      **Total de leitos Enfermaria Clínica:** {total_enf_clinica}  
+                      **Total de leitos Enfermaria Onco:** {total_enf_onco}  
+                      **Total de leitos UTI Geral:** {total_uti_geral}  
+                      **Total de leitos UTI Cardio:** {total_uti_cardio}''')
+        
         # Criação de gráfico de barras com altas, óbitos e transferências
-        total_alta = len(resultado_final[resultado_final['FINALIZACAO DO CASO'] == 'ALTA'])
-        total_obito = len(resultado_final[resultado_final['FINALIZACAO DO CASO'] == 'ÓBITO'])
-        total_transferencia = len(resultado_final[resultado_final['FINALIZACAO DO CASO'] == 'TRANSFERENCIA'])
-
         finalizacao_totais = pd.DataFrame({'Finalização do caso': ['ALTA', 'ÓBITO', 'TRANSFERÊNCIA'],
                                 'Total': [total_alta, total_obito, total_transferencia]})
 
@@ -242,11 +301,8 @@ with aba2:
         fig1.update_layout(yaxis_range=[0, max(total_alta, total_obito, total_transferencia) + 10], hoverlabel=dict(font_size=18))
 
         col3.plotly_chart(fig1)
-        
-        # Criação de gráfico de pizza com sexo
-        total_mulheres = len(resultado_final[resultado_final['SEXO'] == 'FEMININO'])
-        total_homens = len(resultado_final[resultado_final['SEXO'] == 'MASCULINO'])
 
+        # Criação de gráfico de pizza com sexo dos pacientes
         sexo_totais = pd.DataFrame({'Sexo': ['FEMININO', 'MASCULINO'],
                                         'Total': [total_mulheres, total_homens]})
 
