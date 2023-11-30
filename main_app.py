@@ -3,6 +3,7 @@ import pandas as pd
 import datetime
 from streamlit_gsheets import GSheetsConnection
 import plotly.express as px
+import plotly.graph_objects as go
 
 # Configuração da página
 st.set_page_config(page_title='Dashboard Hospital Municipal Prontovida',
@@ -16,7 +17,6 @@ def trocar_por_ponto_virgula(lista):
             lista[i] = lista[i].replace(',', ';').strip()
     return lista
 
-# user-select-none svg-container
 
 # Título principal
 with st.container():
@@ -42,7 +42,8 @@ with st.sidebar:
         st.checkbox('Comorbidades'),
         st.checkbox('Tipo de leito'),
         st.checkbox('Hipótese diagnóstica'),
-        st.checkbox('Finalização do caso'),
+        st.checkbox('Notificação de doença ou agravo'),
+        st.checkbox('Finalização do caso')
     ]
 
 # Limpeza do cache, conexão com o Google Sheets e criação da planilha
@@ -80,6 +81,12 @@ hipotese_diagnostica = df['HIPOTESE DIAGNOSTICA'].astype(str)
 hipotese_diagnostica = trocar_por_ponto_virgula(hipotese_diagnostica)
 todas_hipoteses_diagnosticas = ';'.join(hipotese_diagnostica).split(';')
 hipoteses_diagnosticas_unicas = sorted(set(todas_hipoteses_diagnosticas))
+
+# Leitura das notificações de doenças ou agravos. O prenchimento é multivalorado e deve ser separado
+notificacoes = df['NOTIFICACAO DE DOENCA OU AGRAVO'].astype(str)
+notificacoes = trocar_por_ponto_virgula(notificacoes)
+todas_notificacoes = ';'.join(notificacoes).split(';')
+notificacoes_unicas = sorted(set(todas_notificacoes))
 
 finalizacoes_casos_limpos = []
 finalizacoes_casos = df['FINALIZACAO DO CASO'].astype(str)
@@ -201,6 +208,16 @@ for criterio in criterios_selecionados:
         resultado_final = resultado_final[filtro_hipotese_diagnostica]
 
     if criterio == 10:
+        st.subheader('Notificação de doença ou agravo\n')
+        opcao_notificacao = st.selectbox(
+            'Informe a notificação de doença ou agravo do caso',
+            notificacoes_unicas
+        )
+        if opcao_notificacao:
+            filtro_notificacao = df['NOTIFICACAO DE DOENCA OU AGRAVO'].str.contains('|'.join(opcao_notificacao), case=False, na=False)
+            resultado_final = resultado_final[filtro_notificacao]
+    
+    if criterio == 11:
         st.subheader('Finalização do caso\n')
         opcao_finalizacao_caso = st.selectbox(
             'Informe a finalização do caso',
@@ -273,6 +290,8 @@ with aba1:
 with aba2:
     col1, col2 = st.columns(2)
     col3, col4 = st.columns(2)
+    col5, col6 = st.columns(2)
+    col7, col8 = st.columns(2)
 
     try:
         # Display de dados na tela
@@ -292,23 +311,96 @@ with aba2:
                       **Total de leitos Enfermaria Onco:** {total_enf_onco}  
                       **Total de leitos UTI Geral:** {total_uti_geral}  
                       **Total de leitos UTI Cardio:** {total_uti_cardio}''')
-        
-        # Criação de gráfico de barras com altas, óbitos e transferências
-        finalizacao_totais = pd.DataFrame({'Finalização do caso': ['ALTA', 'ÓBITO', 'TRANSFERÊNCIA'],
-                                'Total': [total_alta, total_obito, total_transferencia]})
 
-        fig1 = px.bar(finalizacao_totais, x='Finalização do caso', y='Total', title='Altas, óbitos e transferências', labels={'count': 'Total'})
-        fig1.update_layout(yaxis_range=[0, max(total_alta, total_obito, total_transferencia) + 10], hoverlabel=dict(font_size=18))
 
+        # ---------------------------------------------------------------------------------------------------------------
+        # Agrupar os dados por Sexo e Finalizacao
+        grouped_data = resultado_final.groupby(['SEXO', 'FINALIZACAO DO CASO']).size().reset_index(name='QUANTIDADE')
+
+        # Criar gráfico de barras empilhadas interativo com Plotly Express
+        fig1 = px.bar(grouped_data, x='SEXO', y='QUANTIDADE', color='FINALIZACAO DO CASO',
+                    title='Distribuição de Finalizações por Sexo',
+                    labels={'QUANTIDADE': 'Quantidade de Casos', 'SEXO': 'Sexo', 'FINALIZACAO DO CASO': 'Finalização'},
+                    barmode='group')
+
+        # Adicionar rótulo ao eixo y
+        fig1.update_yaxes(title_text='Quantidade de Casos')
+
+        fig1.update_layout(paper_bgcolor="#DBF3FA")
+
+        col3.divider()
+        col4.divider()
+
+        # Exibir o gráfico no Streamlit
         col3.plotly_chart(fig1)
 
-        # Criação de gráfico de pizza com sexo dos pacientes
-        sexo_totais = pd.DataFrame({'Sexo': ['FEMININO', 'MASCULINO'],
-                                        'Total': [total_mulheres, total_homens]})
+        # ---------------------------------------------------------------------------------------------------------------
+        # CORRIGIR
 
-        fig2 = px.pie(sexo_totais, names='Sexo', values='Total')
-        fig2.update_layout(hoverlabel=dict(font_size=18))
+        # quantidades_feminino_alta = grouped_data['QUANTIDADE'][0]
+        # quantidades_feminino_transferencia = grouped_data['QUANTIDADE'][1]
+        # quantidades_feminino_obito = grouped_data['QUANTIDADE'][2]
+        # quantidades_masculino_alta = grouped_data['QUANTIDADE'][3]
+        # quantidades_masculino_transferencia = grouped_data['QUANTIDADE'][4]
+        # quantidades_masculino_obito = grouped_data['QUANTIDADE'][5]
+
+        # col4.subheader('Dados:')
+        # col4.markdown(f'''**Total de altas - SEXO FEMININO:** {quantidades_feminino_alta}  
+        #         **Total de transferências - SEXO FEMININO:** {quantidades_feminino_transferencia}  
+        #         **Total de óbitos - SEXO FEMININO:** {quantidades_feminino_obito}  
+        #         -  
+        #         **Total de altas - SEXO MASCULINO:** {quantidades_masculino_alta}  
+        #         **Total de transferências - SEXO MASCULINO:** {quantidades_masculino_transferencia}  
+        #         **Total de óbitos - SEXO MASCULINO:** {quantidades_masculino_obito}''')
+
+
+        # ---------------------------------------------------------------------------------------------------------------
+        # Definir as faixas etárias
+        faixas_etarias = [0, 19, 29, 39, 49, 59, 69, 79, 150]
+        labels_faixas_etarias = ['até 19 anos', '20 a 29 anos', '30 a 39 anos', '40 a 49 anos', '50 a 59 anos', '60 a 69 anos', '70 a 79 anos', 'mais de 80 anos']
+
+        # Criar uma nova coluna 'Faixa Etária' no DataFrame
+        resultado_final['Faixa Etária'] = pd.cut(resultado_final['IDADE'], bins=faixas_etarias, labels=labels_faixas_etarias, right=False)
+
+        # Agrupar os dados por Faixa Etária e contar a quantidade de casos
+        grouped_data = resultado_final.groupby('Faixa Etária').size().reset_index(name='Quantidade')
+
+        fig2 = px.bar(grouped_data, x='Faixa Etária', y='Quantidade',
+                    title='Distribuição de Casos por Faixa Etária',
+                    labels={'Quantidade': 'Quantidade de Casos', 'Faixa Etária': 'Faixa Etária'},
+                    color='Faixa Etária')
+
+        # Adicionar rótulo ao eixo y
+        fig2.update_yaxes(title_text='Quantidade de Casos')
+
+        fig2.update_layout(paper_bgcolor="#DBF3FA")
 
         col4.plotly_chart(fig2)
+
+
+        # ---------------------------------------------------------------------------------------------------------------
+        # Contar a ocorrência de cada tipo de leito
+        count_leitos = resultado_final['LEITO'].value_counts().reset_index(name='Quantidade')
+
+        fig3 = px.pie(count_leitos, names='index', values='Quantidade',
+                    title='Distribuição de Tipos de Leito',
+                    labels={'index': 'Tipo de Leito', 'Quantidade': 'Quantidade'})
+
+        fig3.update_layout(paper_bgcolor="#DBF3FA")
+
+        col5.plotly_chart(fig3)
+
+
+        # ---------------------------------------------------------------------------------------------------------------
+        # Contar a ocorrência de cada semana
+        count_semana = resultado_final['SEMANA Nº'].value_counts().reset_index(name='Quantidade')
+
+        fig4 = px.pie(count_semana, names='index', values='Quantidade',
+                    title='Distribuição de Semanas',
+                    labels={'index': 'Semana', 'Quantidade': 'Quantidade'})
+
+        fig4.update_layout(paper_bgcolor="#DBF3FA")
+
+        col6.plotly_chart(fig4)
     except:
         st.subheader('Erro ao criar gráfico')
