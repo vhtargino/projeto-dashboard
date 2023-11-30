@@ -243,8 +243,11 @@ for i in lista_coluna_semanas:
     else:
         contagem[i] = 1
 
-semana_mais_frequente = max(contagem, key=contagem.get)
-pacientes_semana_mais_frequente = contagem[semana_mais_frequente]
+try:
+    semana_mais_frequente = max(contagem, key=contagem.get)
+    pacientes_semana_mais_frequente = contagem[semana_mais_frequente]
+except:
+    st.write('')
 
 # Contagem de sexo
 total_mulheres = len(resultado_final[resultado_final['SEXO'] == 'FEMININO'])
