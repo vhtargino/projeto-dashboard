@@ -117,13 +117,16 @@ for criterio in criterios_selecionados:
             format="DD.MM.YYYY",
         )
 
-        data_inicio, data_fim = periodo_internacao
-        data_inicio = datetime.datetime.combine(data_inicio, datetime.time.min)
-        data_fim = datetime.datetime.combine(data_fim, datetime.time.max)
+        try:
+            data_inicio, data_fim = periodo_internacao
+            data_inicio = datetime.datetime.combine(data_inicio, datetime.time.min)
+            data_fim = datetime.datetime.combine(data_fim, datetime.time.max)
 
-        if periodo_internacao:
-            filtro_data_internacao = ((pd.to_datetime(df['INTERNAÇÃO'])) >= data_inicio) & ((pd.to_datetime(df['INTERNAÇÃO'])) <= data_fim)
-            resultado_final = resultado_final[filtro_data_internacao]
+            if periodo_internacao:
+                filtro_data_internacao = ((pd.to_datetime(df['INTERNAÇÃO'], dayfirst=True)) >= data_inicio) & ((pd.to_datetime(df['INTERNAÇÃO'], dayfirst=True)) <= data_fim)
+                resultado_final = resultado_final[filtro_data_internacao]
+        except:
+            st.write('Selecione a data de encerramento')
 
     if criterio == 1:
         st.subheader('Semana Epidemiológica\n')
@@ -171,13 +174,16 @@ for criterio in criterios_selecionados:
             format="DD.MM.YYYY",
         )
 
-        data_inicio_sintomas = datetime.datetime(opcao_data_sintomas[0].year, opcao_data_sintomas[0].month, opcao_data_sintomas[0].day)
-        data_fim_sintomas = datetime.datetime(opcao_data_sintomas[1].year, opcao_data_sintomas[1].month, opcao_data_sintomas[1].day)
+        try:
+            data_inicio_sintomas = datetime.datetime(opcao_data_sintomas[0].year, opcao_data_sintomas[0].month, opcao_data_sintomas[0].day)
+            data_fim_sintomas = datetime.datetime(opcao_data_sintomas[1].year, opcao_data_sintomas[1].month, opcao_data_sintomas[1].day)
 
-        df['DATA DOS SINTOMAS'] = pd.to_datetime(df['DATA DOS SINTOMAS'])#, format="%d.%m.%Y")
+            df['DATA DOS SINTOMAS'] = pd.to_datetime(df['DATA DOS SINTOMAS'], dayfirst=True)
 
-        filtro_data_sintomas = (pd.to_datetime(df['DATA DOS SINTOMAS']) >= data_inicio_sintomas) & (pd.to_datetime(df['DATA DOS SINTOMAS']) <= data_fim_sintomas)
-        resultado_final = resultado_final[filtro_data_sintomas]
+            filtro_data_sintomas = (pd.to_datetime(df['DATA DOS SINTOMAS'], dayfirst=True) >= data_inicio_sintomas) & (pd.to_datetime(df['DATA DOS SINTOMAS'], dayfirst=True) <= data_fim_sintomas)
+            resultado_final = resultado_final[filtro_data_sintomas]
+        except:
+            st.write('Selecione a data de encerramento')
 
     if criterio == 7:
         st.subheader('Comorbidades\n')
@@ -208,7 +214,7 @@ for criterio in criterios_selecionados:
 
     if criterio == 10:
         st.subheader('Notificação de doença ou agravo\n')
-        opcao_notificacao = st.selectbox(
+        opcao_notificacao = st.multiselect(
             'Informe a notificação de doença ou agravo do caso',
             notificacoes_unicas
         )
@@ -299,7 +305,7 @@ with aba1:
                     Victor Hugo Targino
                     ''')
     except:
-        st.subheader('Erro ao ler a tabela')
+        st.write('Dados indisponíveis. Verifique os filtros selecionados.')
 
 with aba2:
     col1, col2 = st.columns(2)
@@ -345,7 +351,7 @@ with aba2:
         col4.divider()
 
         # Exibir o gráfico no Streamlit
-        col3.plotly_chart(fig1)
+        col3.plotly_chart(fig1, use_container_width=True)
 
         # ---------------------------------------------------------------------------------------------------------------
         # CORRIGIR
@@ -387,7 +393,7 @@ with aba2:
 
         fig2.update_layout(paper_bgcolor="#DBF3FA")
 
-        col4.plotly_chart(fig2)
+        col4.plotly_chart(fig2, use_container_width=True)
 
         # ---------------------------------------------------------------------------------------------------------------
         # Contar a ocorrência de cada tipo de leito
@@ -399,7 +405,7 @@ with aba2:
 
         fig3.update_layout(paper_bgcolor="#DBF3FA")
 
-        col5.plotly_chart(fig3)
+        col5.plotly_chart(fig3, use_container_width=True)
 
         # ---------------------------------------------------------------------------------------------------------------
         # Contar a ocorrência de cada semana
@@ -411,7 +417,7 @@ with aba2:
 
         fig4.update_layout(paper_bgcolor="#DBF3FA")
 
-        col6.plotly_chart(fig4)
+        col6.plotly_chart(fig4, use_container_width=True)
 
         # Devs
         st.divider()
@@ -425,4 +431,4 @@ with aba2:
                     Victor Hugo Targino
                     ''')
     except:
-        st.subheader('Erro ao criar gráfico')
+        st.write('Dados indisponíveis. Verifique os filtros selecionados.')
