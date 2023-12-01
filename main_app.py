@@ -3,11 +3,11 @@ import pandas as pd
 import datetime
 from streamlit_gsheets import GSheetsConnection
 import plotly.express as px
-import plotly.graph_objects as go
 
 # Configuração da página
 st.set_page_config(page_title='Dashboard Hospital Municipal Prontovida',
-                   layout='wide')
+                   layout='wide',
+                   page_icon='prontovida_favicon.png')
 
 def trocar_por_ponto_virgula(lista):
     for i in range(len(lista)):
@@ -17,14 +17,13 @@ def trocar_por_ponto_virgula(lista):
             lista[i] = lista[i].replace(',', ';').strip()
     return lista
 
-
 # Título principal
 with st.container():
     col_a, col_b = st.columns(2)
 
     col_a.image('prontovida_logo_copia.png', use_column_width='auto')
-    col_b.image('prefeitura_logo.png', use_column_width='auto')
-    # st.divider()
+    col_b.image('prefeitura_logo.png', width=250)
+    col_b.image('uniesp_logo.png')
 
 # Criação e organização do menu lateral
 with st.sidebar:
@@ -287,6 +286,18 @@ with aba1:
             st.write('Resultados da pesquisa:')
 
         st.write(resultado_final)
+
+        # Devs
+        st.divider()
+
+        st.subheader('Equipe de desenvolvedores:')
+
+        st.markdown('''Andrezza Almeida  
+                    Camila Cruz  
+                    Leonardo Eggers  
+                    Maísa Akiko Guimarães  
+                    Victor Hugo Targino
+                    ''')
     except:
         st.subheader('Erro ao ler a tabela')
 
@@ -314,7 +325,6 @@ with aba2:
                       **Total de leitos Enfermaria Onco:** {total_enf_onco}  
                       **Total de leitos UTI Geral:** {total_uti_geral}  
                       **Total de leitos UTI Cardio:** {total_uti_cardio}''')
-
 
         # ---------------------------------------------------------------------------------------------------------------
         # Agrupar os dados por Sexo e Finalizacao
@@ -356,7 +366,6 @@ with aba2:
         #         **Total de transferências - SEXO MASCULINO:** {quantidades_masculino_transferencia}  
         #         **Total de óbitos - SEXO MASCULINO:** {quantidades_masculino_obito}''')
 
-
         # ---------------------------------------------------------------------------------------------------------------
         # Definir as faixas etárias
         faixas_etarias = [0, 19, 29, 39, 49, 59, 69, 79, 150]
@@ -380,7 +389,6 @@ with aba2:
 
         col4.plotly_chart(fig2)
 
-
         # ---------------------------------------------------------------------------------------------------------------
         # Contar a ocorrência de cada tipo de leito
         count_leitos = resultado_final['LEITO'].value_counts().reset_index(name='Quantidade')
@@ -393,17 +401,28 @@ with aba2:
 
         col5.plotly_chart(fig3)
 
-
         # ---------------------------------------------------------------------------------------------------------------
         # Contar a ocorrência de cada semana
         count_semana = resultado_final['SEMANA Nº'].value_counts().reset_index(name='Quantidade')
 
         fig4 = px.pie(count_semana, names='index', values='Quantidade',
-                    title='Distribuição de Semanas',
+                    title='Distribuição de pacientes por Semana Epidemiológica',
                     labels={'index': 'Semana', 'Quantidade': 'Quantidade'})
 
         fig4.update_layout(paper_bgcolor="#DBF3FA")
 
         col6.plotly_chart(fig4)
+
+        # Devs
+        st.divider()
+
+        st.subheader('Equipe de desenvolvedores:')
+
+        st.markdown('''Andrezza Almeida  
+                    Camila Cruz  
+                    Leonardo Eggers  
+                    Maísa Akiko Guimarães  
+                    Victor Hugo Targino
+                    ''')
     except:
         st.subheader('Erro ao criar gráfico')
